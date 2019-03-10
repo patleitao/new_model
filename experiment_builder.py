@@ -65,7 +65,7 @@ class ExperimentBuilder(nn.Module):
         print(self.experiment_folder, self.experiment_logs)
         # Set best models to be at 0 since we are just starting
         self.best_val_model_idx = 0
-        self.best_val_model_acc = 0.
+        self.best_val_model_loss = 0.
 
         self.loss_weights = loss_weights
 
