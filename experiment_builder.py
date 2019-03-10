@@ -210,7 +210,7 @@ class ExperimentBuilder(nn.Module):
         Runs experiment train and evaluation iterations, saving the model and best val model and val model accuracy after each epoch
         :return: The summary current_epoch_losses from starting epoch to total_epochs.
         """
-        total_losses = {"train_loss": [], "val_loss": []}  # initialize a dict to keep the per-epoch metrics
+        total_losses = {"train_loss": [], "val_loss": [], "curr_epoch": []}  # initialize a dict to keep the per-epoch metrics
         for i, epoch_idx in enumerate(range(self.starting_epoch, self.num_epochs)):
             epoch_start_time = time.time()
             current_epoch_losses = {"train_loss": [], "val_loss": []}
