@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 import os
-#import GPUtil
+import GPUtil
 
 
 def str2bool(v):

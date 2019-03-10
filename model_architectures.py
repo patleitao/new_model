@@ -81,11 +81,8 @@ class SaliencyModel(nn.Module):
     def forward(self, x):
 
         encoding1 = self.encoder1(x)
-        print(encoding1.shape)
         encoding2 = self.encoder2(encoding1)
-        print(encoding2.shape)
         encoding3 = self.encoder3(encoding2)
-        print(encoding3.shape)
 
         decoding1 = self.decoder1(encoding1)
         decoding1 = F.relu(decoding1, inplace=True)

@@ -153,9 +153,9 @@ class ExperimentBuilder(nn.Module):
         self.eval() # sets the system to validation mode
 
         x = torch.tensor(x).float().to(device=self.device)
-        y1 = torch.tensor(y1).long().to(device=self.device)
-        y2 = torch.tensor(y2).long().to(device=self.device)
-        y3 = torch.tensor(y3).long().to(device=self.device)
+        y1 = torch.tensor(y1).float().to(device=self.device)
+        y2 = torch.tensor(y2).float().to(device=self.device)
+        y3 = torch.tensor(y3).float().to(device=self.device)
 
         x = x.to(self.device)
         y1 = y1.to(self.device)
