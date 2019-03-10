@@ -268,8 +268,6 @@ class ExperimentBuilder(nn.Module):
                 self.best_val_model_loss = val_mean_loss  # set the best val model acc to be current epoch's val accuracy
                 self.best_val_model_idx = epoch_idx  # set the experiment-wise best val idx to be the current epoch's idx
 
-            total_losses["time_spent_on_data_loading"].append(epoch_total_loading_time)
-            total_losses["time_spent_on_computing"].append(epoch_other_computation_time)
             for key, value in current_epoch_losses.items():
                 total_losses[key].append(np.mean(
                     value))  # get mean of all metrics of current epoch metrics dict, to get them ready for storage and output on the terminal.
