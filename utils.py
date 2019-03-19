@@ -6,33 +6,41 @@ import pickle
 import sys
 import os
 from PIL import Image
- 
-def get_run_num():
-    if len(sys.argv)>1:
-        return sys.argv[1]
+from scipy.misc import imresize
+import random
 
-def save_model(model, model_name):
-    # serialize model to JSON
-    model_json = model.to_json()
-    model_name = model_name + ".json"
-    with open(model_name, "w") as json_file:
-        json_file.write(model_json)
-    # serialize weights to HDF5
-    model_weights_name = model_name + ".h5"
-    model.save_weights(model_weights_name)
-    return "Saved model and weights to disk"
+def create_labels_mult_decoder(x):
 
-def load_model(model_name):
-    # load json and create model
-    model_name = model_name + ".json"
-    json_file = open(model_name, 'r')
-    loaded_model_json = json_file.read()
-    json_file.close()
-    loaded_model = model_from_json(loaded_model_json)
-    # load weights into new model
-    model_weights_name = model_name + ".h5"
-    loaded_model.load_weights(model_weights_name)
-    return loaded_model
+    y1 = np.zeros((x.shape[0], 1, 64, 64))
+    y2 = np.zeros((x.shape[0], 1, 32, 32))
+    y3 = np.zeros((x.shape[0], 1, 8, 8))
+    for idx, img in enumerate(x):
+        label1 = imresize(img[0], (64, 64))
+        label2 = imresize(img[0], (32, 32))
+        label3 = imresize(img[0], (8, 8))
+        y1[idx][0] = label1
+        y2[idx][0] = label2
+        y3[idx][0] = label3
+    return y1, y2, y3
+
+
+def create_labels_holes(x, patch_size=8):
+
+    y = np.zeros((x.shape[0], patch_size, patch_size))
+    new_x = np.array(x, copy=True)
+    for batch_idx in range(x.shape[0]):
+        h_rand = random.randint(patch_size, x.shape[2]-patch_size)
+        w_rand = random.randint(patch_size, x.shape[3]-patch_size)
+        
+        mask = np.ones((x.shape[2], x.shape[3]))
+        mask[h_rand-(patch_size//2):h_rand+(patch_size//2), w_rand-(patch_size//2):w_rand+(patch_size//2)] = 0
+
+        y[batch_idx] = x[batch_idx, 0, h_rand-(patch_size//2):h_rand+(patch_size//2), w_rand-(patch_size//2):w_rand+(patch_size//2)]
+        new_x[batch_idx, 0, h_rand-(patch_size//2):h_rand+(patch_size//2), w_rand-(patch_size//2):w_rand+(patch_size//2)] = 0
+
+    return new_x, y
+
+
 
 def save_array(obj, fname):
     pickle.dump(obj, open(fname, 'wb'))

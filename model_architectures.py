@@ -23,7 +23,7 @@ class SaliencyModel(nn.Module):
         super(SaliencyModel, self).__init__()
 
         num_features = [32, 64, 64, 128, 256]
-        num_dec_features = 32
+        num_dec_features = [32, 32, 32]
 
         self.encoder1 = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(1, num_features[0], kernel_size=7, stride=2, padding=3, bias=False)),
@@ -55,26 +55,26 @@ class SaliencyModel(nn.Module):
 
         self.decoder1 = nn.Sequential(OrderedDict([
             ('up1', nn.Upsample(scale_factor=2)),
-            ('conv5', nn.Conv2d(num_features[1], num_dec_features, kernel_size=3, stride=1, padding=1, bias=False)),
-            ('norm5', nn.BatchNorm2d(num_dec_features)),
+            ('conv5', nn.Conv2d(num_features[1], num_dec_features[0], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm5', nn.BatchNorm2d(num_dec_features[0])),
             ('relu5', nn.ReLU(inplace=True)),
-            ('final-conv1', nn.Conv2d(num_dec_features, 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('final-conv1', nn.Conv2d(num_dec_features[0], 1, kernel_size=1, stride=1, padding=0, bias=True))
         ]))
 
         self.decoder2 = nn.Sequential(OrderedDict([
             ('up2', nn.Upsample(scale_factor=2)),
-            ('conv6', nn.Conv2d(num_features[2], num_dec_features, kernel_size=3, stride=1, padding=1, bias=False)),
-            ('norm6', nn.BatchNorm2d(num_dec_features)),
+            ('conv6', nn.Conv2d(num_features[2], num_dec_features[1], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm6', nn.BatchNorm2d(num_dec_features[1])),
             ('relu6', nn.ReLU(inplace=True)),
-            ('final-conv2', nn.Conv2d(num_dec_features, 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('final-conv2', nn.Conv2d(num_dec_features[1], 1, kernel_size=1, stride=1, padding=0, bias=True))
         ]))
 
         self.decoder3 = nn.Sequential(OrderedDict([
             ('up3', nn.Upsample(scale_factor=2)),
-            ('conv7', nn.Conv2d(num_features[4], num_dec_features, kernel_size=3, stride=1, padding=1, bias=False)),
-            ('norm7', nn.BatchNorm2d(num_dec_features)),
+            ('conv7', nn.Conv2d(num_features[4], num_dec_features[2], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm7', nn.BatchNorm2d(num_dec_features[2])),
             ('relu7', nn.ReLU(inplace=True)),
-            ('final-conv3', nn.Conv2d(num_dec_features, 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('final-conv3', nn.Conv2d(num_dec_features[2], 1, kernel_size=1, stride=1, padding=0, bias=True))
         ]))
 
 
@@ -103,5 +103,199 @@ class SaliencyModel(nn.Module):
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
                 nn.init.constant_(m.bias, 0)
+
+
+class SaliencyModelStandard(nn.Module):
+
+    def __init__(self):
+
+        super(SaliencyModelStandard, self).__init__()
+
+        num_features = [48, 64, 96, 128, 256]
+        num_dec_features = [128, 96, 64, 48]
+
+        self.encoder = nn.Sequential(OrderedDict([
+            ('conv0', nn.Conv2d(1, num_features[0], kernel_size=7, stride=2, padding=3, bias=False)),
+            ('norm0', nn.BatchNorm2d(num_features[0])),
+            ('relu0', nn.ReLU(inplace=True)),
+            ('conv1', nn.Conv2d(num_features[0], num_features[1], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm1', nn.BatchNorm2d(num_features[1])),
+            ('relu1', nn.ReLU(inplace=True)),
+            ('pool1', nn.MaxPool2d(kernel_size=2))
+            ('conv2', nn.Conv2d(num_features[1], num_features[2], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm2', nn.BatchNorm2d(num_features[2])),
+            ('relu2', nn.ReLU(inplace=True)),
+            ('pool2', nn.MaxPool2d(kernel_size=2))
+            ('conv3', nn.Conv2d(num_features[2], num_features[3], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm3', nn.BatchNorm2d(num_features[3])),
+            ('relu3', nn.ReLU(inplace=True)),
+            ('pool3', nn.MaxPool2d(kernel_size=2))
+            ('conv4', nn.Conv2d(num_features[3], num_features[4], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm4', nn.BatchNorm2d(num_features[4])),
+            ('relu4', nn.ReLU(inplace=True)),
+            ('pool4', nn.MaxPool2d(kernel_size=2))
+        ]))
+
+        self.decoder = nn.Sequential(OrderedDict([
+            ('up1', nn.Upsample(scale_factor=2)),
+            ('conv5', nn.Conv2d(num_features[4], num_dec_features[0], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm5', nn.BatchNorm2d(num_dec_features[0])),
+            ('relu5', nn.ReLU(inplace=True)),
+            ('up2', nn.Upsample(scale_factor=2)),
+            ('conv6', nn.Conv2d(num_dec_features[0], num_dec_features[1], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm6', nn.BatchNorm2d(num_dec_features[1])),
+            ('relu6', nn.ReLU(inplace=True)),
+            ('up3', nn.Upsample(scale_factor=2)),
+            ('conv7', nn.Conv2d(num_dec_features[1], num_dec_features[2], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm7', nn.BatchNorm2d(num_dec_features[2])),
+            ('relu7', nn.ReLU(inplace=True)),
+            ('up4', nn.Upsample(scale_factor=2)),
+            ('conv8', nn.Conv2d(num_dec_features[2], num_dec_features[3], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm8', nn.BatchNorm2d(num_dec_features[3])),
+            ('relu8', nn.ReLU(inplace=True)),
+            ('final-conv1', nn.Conv2d(num_dec_features[3], 1, kernel_size=1, stride=1, padding=0, bias=True))
+        ]))
+
+
+    def forward(self, x):
+
+        encoding = self.encoder(x)
+        decoding = self.decoder(encoding)
+        decoding = F.relu(decoding, inplace=True)
+
+        return decoding1, decoding2, decoding3
+
+
+    def reset_parameters(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.constant_(m.bias, 0)
+
+
+
+
+class SaliencyModelHolesConv(nn.Module):
+
+    def __init__(self):
+
+        super(SaliencyModelHolesConv, self).__init__()
+
+        num_features = [48, 64, 96, 128, 196, 256]
+
+        self.encoder = nn.Sequential(OrderedDict([
+            ('conv0', nn.Conv2d(1, num_features[0], kernel_size=7, stride=2, padding=3, bias=False)),
+            ('norm0', nn.BatchNorm2d(num_features[0])),
+            ('relu0', nn.ReLU(inplace=True)),
+            ('conv1', nn.Conv2d(num_features[0], num_features[1], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm1', nn.BatchNorm2d(num_features[1])),
+            ('relu1', nn.ReLU(inplace=True)),
+            ('pool1', nn.MaxPool2d(kernel_size=2)),
+            ('conv2', nn.Conv2d(num_features[1], num_features[2], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm2', nn.BatchNorm2d(num_features[2])),
+            ('relu2', nn.ReLU(inplace=True)),
+            ('pool2', nn.MaxPool2d(kernel_size=2)),
+            ('conv3', nn.Conv2d(num_features[2], num_features[3], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm3', nn.BatchNorm2d(num_features[3])),
+            ('relu3', nn.ReLU(inplace=True)),
+            ('pool3', nn.MaxPool2d(kernel_size=2)),
+            ('conv4', nn.Conv2d(num_features[3], num_features[4], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm4', nn.BatchNorm2d(num_features[4])),
+            ('relu4', nn.ReLU(inplace=True)),
+            ('pool4', nn.MaxPool2d(kernel_size=2)),
+            ('conv5', nn.Conv2d(num_features[4], num_features[5], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm5', nn.BatchNorm2d(num_features[5])),
+            ('relu5', nn.ReLU(inplace=True)),
+            ('up1', nn.Upsample(scale_factor=2)),
+            ('conv6', nn.Conv2d(num_features[5], num_features[2], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm6', nn.BatchNorm2d(num_features[2])),
+            ('relu6', nn.ReLU(inplace=True)),
+            ('final-conv1', nn.Conv2d(num_features[2], 1, kernel_size=1, stride=1, padding=0, bias=True))
+        ]))
+
+
+    def forward(self, x):
+
+        encoding = self.encoder(x)
+        return encoding
+
+
+    def reset_parameters(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.constant_(m.bias, 0)
+
+
+class SaliencyModelHolesFCL(nn.Module):
+
+    # EXPECTS INPUT OF 128X128 and produces 8x8 output
+
+    def __init__(self, input_size=128):
+
+        super(SaliencyModelHolesFCL, self).__init__()
+
+        self.input_size = input_size
+
+        num_features = [48, 64, 96, 128, 196, 256]
+
+        target_size = (input_size // 16) * (input_size // 16)
+        out_size = input_size // 32
+
+        self.encoder = nn.Sequential(OrderedDict([
+            ('conv0', nn.Conv2d(1, num_features[0], kernel_size=7, stride=2, padding=3, bias=False)),
+            ('norm0', nn.BatchNorm2d(num_features[0])),
+            ('relu0', nn.ReLU(inplace=True)),
+            ('conv1', nn.Conv2d(num_features[0], num_features[1], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm1', nn.BatchNorm2d(num_features[1])),
+            ('relu1', nn.ReLU(inplace=True)),
+            ('pool1', nn.MaxPool2d(kernel_size=2)),
+            ('conv2', nn.Conv2d(num_features[1], num_features[2], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm2', nn.BatchNorm2d(num_features[2])),
+            ('relu2', nn.ReLU(inplace=True)),
+            ('pool2', nn.MaxPool2d(kernel_size=2)),
+            ('conv3', nn.Conv2d(num_features[2], num_features[3], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm3', nn.BatchNorm2d(num_features[3])),
+            ('relu3', nn.ReLU(inplace=True)),
+            ('pool3', nn.MaxPool2d(kernel_size=2)),
+            ('conv4', nn.Conv2d(num_features[3], num_features[4], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm4', nn.BatchNorm2d(num_features[4])),
+            ('relu4', nn.ReLU(inplace=True)),
+            ('pool4', nn.MaxPool2d(kernel_size=2)),
+            ('conv5', nn.Conv2d(num_features[4], num_features[5], kernel_size=3, stride=1, padding=1, bias=False)),
+            ('norm5', nn.BatchNorm2d(num_features[5])),
+            ('relu5', nn.ReLU(inplace=True))
+        ]))
+
+        self.fc = nn.Linear(num_features[5]*out_size*out_size, target_size)
+
+
+    def forward(self, x):
+
+        out = self.encoder(x)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc(out)
+        out = out.reshape((x.shape[0], self.input_size // 16, self.input_size // 16))
+        return out
+
+
+    def reset_parameters(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.constant_(m.bias, 0)
+
 
 

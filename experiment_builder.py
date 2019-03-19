@@ -10,10 +10,13 @@ from scipy.misc import imresize
 
 from storage_utils import save_statistics
 
+from utils import create_labels_mult_decoder
+from utils import create_labels_holes
+
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334]):
+                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -68,6 +71,8 @@ class ExperimentBuilder(nn.Module):
         self.best_val_model_loss = 0.
 
         self.loss_weights = loss_weights
+        self.model_arc = model_arc
+        self.input_size = input_size
 
         if not os.path.exists(self.experiment_folder):  # If experiment directory does not exist
             os.mkdir(self.experiment_folder)  # create the experiment directory
@@ -110,27 +115,52 @@ class ExperimentBuilder(nn.Module):
 
         return total_num_params
 
-    def run_train_iter(self, x, y1, y2, y3):
+    def run_train_iter(self, x):
 
 
         self.train()  # sets model to training mode (in case batch normalization or other methods have different procedures for training and evaluation)
 
-        x  = torch.tensor(x).float().to(device=self.device)
-        y1 = torch.tensor(y1).float().to(device=self.device)
-        y2 = torch.tensor(y2).float().to(device=self.device)
-        y3 = torch.tensor(y3).float().to(device=self.device)
+        if self.model_arc == 'multdec':
 
-        x = x.to(self.device)
-        y1 = y1.to(self.device)
-        y2 = y2.to(self.device)
-        y3 = y3.to(self.device)
+            y1, y2, y3 = create_labels_mult_decoder(x) 
+            x  = torch.tensor(x).float().to(device=self.device)
+            y1 = torch.tensor(y1).float().to(device=self.device)
+            y2 = torch.tensor(y2).float().to(device=self.device)
+            y3 = torch.tensor(y3).float().to(device=self.device)
 
-        out1, out2, out3 = self.model.forward(x)
+            out1, out2, out3 = self.model.forward(x)
 
-        loss_1 = F.mse_loss(input=out1, target=y1)
-        loss_2 = F.mse_loss(input=out2, target=y2)
-        loss_3 = F.mse_loss(input=out3, target=y3)
-        loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
+            loss_1 = F.mse_loss(input=out1, target=y1)
+            loss_2 = F.mse_loss(input=out2, target=y2)
+            loss_3 = F.mse_loss(input=out3, target=y3)
+            loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
+
+        elif self.model_arc == 'holefcl':
+
+            patch_size = self.input_size // 16
+
+            x, y = create_labels_holes(x, patch_size=patch_size)
+
+            x = torch.tensor(x).float().to(device=self.device)
+            y = torch.tensor(y).float().to(device=self.device)
+
+            out = self.model.forward(x)
+
+            loss = F.mse_loss(input=out, target=y)
+
+        elif self.model_arc == 'holeconv':
+
+            patch_size = self.input_size // 16
+
+            x, y = create_labels_holes(x, patch_size=patch_size)
+
+            x = torch.tensor(x).float().to(device=self.device)
+            y = torch.tensor(y).float().to(device=self.device)
+
+            out = self.model.forward(x)
+            out = out[:, 0, :, :]
+            loss = F.mse_loss(input=out, target=y)
+
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -142,7 +172,7 @@ class ExperimentBuilder(nn.Module):
 
 
 
-    def run_evaluation_iter(self, x, y1, y2, y3):
+    def run_evaluation_iter(self, x):
         """
         Receives the inputs and targets for the model and runs an evaluation iterations. Returns loss and accuracy metrics.
         :param x: The inputs to the model. A numpy array of shape batch_size, channels, height, width
@@ -152,22 +182,31 @@ class ExperimentBuilder(nn.Module):
 
         self.eval() # sets the system to validation mode
 
-        x = torch.tensor(x).float().to(device=self.device)
-        y1 = torch.tensor(y1).float().to(device=self.device)
-        y2 = torch.tensor(y2).float().to(device=self.device)
-        y3 = torch.tensor(y3).float().to(device=self.device)
+        if self.model_arc == 'multdec':
 
-        x = x.to(self.device)
-        y1 = y1.to(self.device)
-        y2 = y2.to(self.device)
-        y3 = y3.to(self.device)
+            y1, y2, y3 = create_labels_mult_decoder(x) 
+            x  = torch.tensor(x).float().to(device=self.device)
+            y1 = torch.tensor(y1).float().to(device=self.device)
+            y2 = torch.tensor(y2).float().to(device=self.device)
+            y3 = torch.tensor(y3).float().to(device=self.device)
 
-        out1, out2, out3 = self.model.forward(x)
+            out1, out2, out3 = self.model.forward(x)
 
-        loss_1 = F.mse_loss(input=out1, target=y1)
-        loss_2 = F.mse_loss(input=out2, target=y2)
-        loss_3 = F.mse_loss(input=out3, target=y3)
-        loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
+            loss_1 = F.mse_loss(input=out1, target=y1)
+            loss_2 = F.mse_loss(input=out2, target=y2)
+            loss_3 = F.mse_loss(input=out3, target=y3)
+            loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
+
+        elif self.model_arc == 'holeconv' or self.model_arc == 'holefcl':
+
+            x, y = create_labels_holes(x)
+
+            x = torch.tensor(x).float().to(device=self.device)
+            y = torch.tensor(y).float().to(device=self.device)
+
+            out = self.model.forward(x)
+
+            loss = F.mse_loss(input=out, target=y)
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -223,20 +262,7 @@ class ExperimentBuilder(nn.Module):
                     epoch_total_loading_time += time.time() - loading_start_time
                     other_computation_start_time = time.time()
 
-                    # CREATE LABELS
-                    y1 = np.zeros((x.shape[0], 1, 64, 64))
-                    y2 = np.zeros((x.shape[0], 1, 32, 32))
-                    y3 = np.zeros((x.shape[0], 1, 8, 8))
-                    for idx, img in enumerate(x):
-                        label1 = imresize(img[0], (64, 64))
-                        label2 = imresize(img[0], (32, 32))
-                        label3 = imresize(img[0], (8, 8))
-                        y1[idx][0] = label1
-                        y2[idx][0] = label2
-                        y3[idx][0] = label3
-                        
-
-                    loss = self.run_train_iter(x=x, y1=y1, y2=y2, y3=y3)  # take a training iter step
+                    loss = self.run_train_iter(x=x)  # take a training iter step
                     current_epoch_losses["train_loss"].append(loss)  # add current iter loss to the train loss list
                     pbar_train.update(1)
                     pbar_train.set_description("loss: {:.4f}".format(loss))
@@ -247,19 +273,7 @@ class ExperimentBuilder(nn.Module):
                 
                 for x in self.val_data:  # get data batches
 
-                    # CREATE LABELS
-                    y1 = np.zeros((x.shape[0], 1, 64, 64))
-                    y2 = np.zeros((x.shape[0], 1, 32, 32))
-                    y3 = np.zeros((x.shape[0], 1, 8, 8))
-                    for idx, img in enumerate(x):
-                        label1 = imresize(img[0], (64, 64))
-                        label2 = imresize(img[0], (32, 32))
-                        label3 = imresize(img[0], (8, 8))
-                        y1[idx][0] = label1
-                        y2[idx][0] = label2
-                        y3[idx][0] = label3
-
-                    loss = self.run_evaluation_iter(x=x, y1=y1, y2=y2, y3=y3)  # run a validation iter
+                    loss = self.run_evaluation_iter(x=x)  # run a validation iter
                     current_epoch_losses["val_loss"].append(loss)  # add current iter loss to val loss list.
                     pbar_val.update(1)  # add 1 step to the progress bar
                     pbar_val.set_description("loss: {:.4f}".format(loss))
@@ -306,20 +320,7 @@ class ExperimentBuilder(nn.Module):
         with tqdm.tqdm(total=len(self.val_data)) as pbar_test:  # ini a progress bar
             for x in self.test_data:  # sample batch
 
-                # CREATE LABELS
-                y1 = np.zeros((x.shape[0], 1, 64, 64))
-                y2 = np.zeros((x.shape[0], 1, 32, 32))
-                y3 = np.zeros((x.shape[0], 1, 8, 8))
-                for idx, img in enumerate(x):
-                    label1 = imresize(img[0], (64, 64))
-                    label2 = imresize(img[0], (32, 32))
-                    label3 = imresize(img[0], (8, 8))
-                    y1[idx][0] = label1
-                    y2[idx][0] = label2
-                    y3[idx][0] = label3
-
-
-                loss = self.run_evaluation_iter(x=x, y1=y1, y2=y2, y3=y3)
+                loss = self.run_evaluation_iter(x=x)
                 current_epoch_losses["test_loss"].append(loss)  # save test loss
                 pbar_test.update(1)  # update progress bar status
                 pbar_test.set_description(

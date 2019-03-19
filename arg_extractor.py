@@ -37,9 +37,21 @@ def get_args():
     parser.add_argument('--filepath_to_arguments_json_file', nargs="?", type=str, default=None,
                         help='')
     
+    # Choose Model
+
+    parser.add_argument('--model_arc', nargs="?", type=str, default="standard", help="standard, multdec, holeconv, holefcl")
+    parser.add_argument('--input_size', nargs="?", type=int, default=128, help="128, 64, 32")
+
+
+    # Mutliple Decoder Arguments
 
     parser.add_argument('--loss_weights', nargs="*", type=float, default=[0.333, 0.333, 0.334],
                         help='weight of each image reconstruction size')
+
+
+
+
+
 
 
     args = parser.parse_args()
