@@ -5,3 +5,5 @@ __pycache__/
 salicon_images
 images_128
 images_64
+data/
+results/
