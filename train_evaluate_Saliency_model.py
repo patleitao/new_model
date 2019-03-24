@@ -23,10 +23,13 @@ elif args.input_size == 64:
 elif args.input_size == 32:
 	imgs = load_array("images_32")
 
-trainset = imgs[:82000]
+train_size = 100
+val_size = 10
+
+trainset = imgs[:train_size]
 trainset = np.expand_dims(trainset, axis=1)
 train_data = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=2)
-valset = imgs[82000:84000]
+valset = imgs[train_size:(train_size+val_size)]
 valset = np.expand_dims(valset, axis=1)
 val_data = torch.utils.data.DataLoader(valset, batch_size=args.batch_size, shuffle=True, num_workers=2)
 testset = imgs[84000:87782]
@@ -41,7 +44,7 @@ elif args.model_arc == "standard":
 elif args.model_arc == "holeconv":
 	conv_net = SaliencyModelHolesConv()
 elif args.model_arc == "holefcl":
-	conv_net = SaliencyModelHolesFCL(args.input_size)
+	conv_net = SaliencyModelHolesFCL(input_size=args.input_size, ps=args.patch_size)
 
 conv_experiment = ExperimentBuilder(network_model=conv_net,
                                     experiment_name=args.experiment_name,
@@ -50,7 +53,7 @@ conv_experiment = ExperimentBuilder(network_model=conv_net,
                                     gpu_id=args.gpu_id, use_gpu=args.use_gpu,
                                     continue_from_epoch=args.continue_from_epoch,
                                     train_data=train_data, val_data=val_data,
-                                    test_data=test_data, loss_weights=args.loss_weights, model_arc=args.model_arc, input_size=args.input_size,
+                                    test_data=test_data, loss_weights=args.loss_weights, model_arc=args.model_arc, input_size=args.input_size, patch_size=args.patch_size,
                                     device = device) 
 
 

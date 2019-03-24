@@ -13,10 +13,12 @@ from storage_utils import save_statistics
 from utils import create_labels_mult_decoder
 from utils import create_labels_holes
 
+import matplotlib.pyplot as plt
+
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128):
+                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128, patch_size=8):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -73,6 +75,7 @@ class ExperimentBuilder(nn.Module):
         self.loss_weights = loss_weights
         self.model_arc = model_arc
         self.input_size = input_size
+        self.patch_size = patch_size
 
         if not os.path.exists(self.experiment_folder):  # If experiment directory does not exist
             os.mkdir(self.experiment_folder)  # create the experiment directory
@@ -137,22 +140,17 @@ class ExperimentBuilder(nn.Module):
 
         elif self.model_arc == 'holefcl':
 
-            patch_size = self.input_size // 16
-
-            x, y = create_labels_holes(x, patch_size=patch_size)
+            x, y = create_labels_holes(x, patch_size=self.patch_size)
 
             x = torch.tensor(x).float().to(device=self.device)
             y = torch.tensor(y).float().to(device=self.device)
 
             out = self.model.forward(x)
-
             loss = F.mse_loss(input=out, target=y)
 
         elif self.model_arc == 'holeconv':
 
-            patch_size = self.input_size // 16
-
-            x, y = create_labels_holes(x, patch_size=patch_size)
+            x, y = create_labels_holes(x, patch_size=self.patch_size)
 
             x = torch.tensor(x).float().to(device=self.device)
             y = torch.tensor(y).float().to(device=self.device)
@@ -197,15 +195,25 @@ class ExperimentBuilder(nn.Module):
             loss_3 = F.mse_loss(input=out3, target=y3)
             loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
 
-        elif self.model_arc == 'holeconv' or self.model_arc == 'holefcl':
+        elif self.model_arc == 'holefcl':
 
-            x, y = create_labels_holes(x)
+            x, y = create_labels_holes(x, patch_size=self.patch_size)
 
             x = torch.tensor(x).float().to(device=self.device)
             y = torch.tensor(y).float().to(device=self.device)
 
             out = self.model.forward(x)
+            loss = F.mse_loss(input=out, target=y)
 
+        elif self.model_arc == 'holeconv':
+
+            x, y = create_labels_holes(x, patch_size=self.patch_size)
+
+            x = torch.tensor(x).float().to(device=self.device)
+            y = torch.tensor(y).float().to(device=self.device)
+
+            out = self.model.forward(x)
+            out = out[:, 0, :, :]
             loss = F.mse_loss(input=out, target=y)
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0

@@ -42,6 +42,8 @@ def create_labels_holes(x, patch_size=8):
 
 
 
+
+
 def save_array(obj, fname):
     pickle.dump(obj, open(fname, 'wb'))
 

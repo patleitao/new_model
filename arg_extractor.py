@@ -41,6 +41,7 @@ def get_args():
 
     parser.add_argument('--model_arc', nargs="?", type=str, default="standard", help="standard, multdec, holeconv, holefcl")
     parser.add_argument('--input_size', nargs="?", type=int, default=128, help="128, 64, 32")
+    parser.add_argument('--patch_size', nargs="?", type=int, default=8)
 
 
     # Mutliple Decoder Arguments

@@ -239,16 +239,17 @@ class SaliencyModelHolesFCL(nn.Module):
 
     # EXPECTS INPUT OF 128X128 and produces 8x8 output
 
-    def __init__(self, input_size=128):
+    def __init__(self, input_size=128, ps=8):
 
         super(SaliencyModelHolesFCL, self).__init__()
 
         self.input_size = input_size
+        self.ps = ps
 
         num_features = [48, 64, 96, 128, 196, 256]
 
-        target_size = (input_size // 16) * (input_size // 16)
-        out_size = input_size // 32
+        target_size = ps * ps
+        out_size = self.input_size // 32
 
         self.encoder = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(1, num_features[0], kernel_size=7, stride=2, padding=3, bias=False)),
@@ -283,7 +284,7 @@ class SaliencyModelHolesFCL(nn.Module):
         out = self.encoder(x)
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
-        out = out.reshape((x.shape[0], self.input_size // 16, self.input_size // 16))
+        out = out.reshape((x.shape[0], self.ps, self.ps))
         return out
 
 
