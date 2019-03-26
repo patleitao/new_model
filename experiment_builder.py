@@ -184,16 +184,8 @@ class ExperimentBuilder(nn.Module):
             #     loss2 = F.mse_loss(input=out, target= y)
             #     loss = ( 5 * loss1 ) + loss2
 
-            else:
-                num = np.sum(masks.detach().numpy()).item()
-                loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
-
-                plt.imshow(out_mask[0,0,:,:].detach().numpy())
-                plt.show()
-                plt.imshow(y_mask[0,0,:,:].detach().numpy())
-                plt.show()
-                plt.imshow(new_x[0,0,:,:].detach().numpy())
-                plt.show()
+            num = np.sum(masks.detach().numpy()).item()
+            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -232,18 +224,51 @@ class ExperimentBuilder(nn.Module):
 
         elif self.model_arc == 'holes':
 
-            x, y = create_labels_holes(x, hole_size=self.hole_size)
+            new_x, masks = create_labels_holes(x, self.hole_context)
+            y = np.array(x, copy=True)
 
-            x = torch.tensor(x).float().to(device=self.device)
+            new_x = torch.tensor(new_x).float().to(device=self.device)
             y = torch.tensor(y).float().to(device=self.device)
+            masks = torch.tensor(masks).float().to(device=self.device)
 
-            out = self.model.forward(x)
-            loss = F.mse_loss(input=out, target=y)
+            out = self.model.forward(new_x)
+            out_mask = torch.mul(out, masks)
+            y_mask = torch.mul(y, masks)
+            #y[masks == 0] = 0 
+            #out[masks == 0] = 0
 
-        self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
-        loss.backward()  # backpropagate to compute gradients for current iter loss
+            # apply mask to target and output
+            # for batch_idx in range(new_x.shape[0]):
+            #     y[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0 
+            #     out[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0
 
-        self.optimizer.step()  # update network parameters
+            # plt.imshow(y[0, 0, :, :])
+            # plt.show()
+            # plt.imshow(y[1, 0, :, :])
+            # plt.show()
+            # plt.imshow(out.detach().numpy()[0, 0, :, :])
+            # plt.show()
+            # plt.imshow(out.detach().numpy()[1, 0, :, :])
+            # plt.show()
+
+
+            # if (self.loss_multiplier == True):   
+            #     y_multiplier = np.array(y, copy=True)
+            #     out_multiplier = np.array(out.detach().numpy(), copy=True)
+            #     for batch_idx in range(new_x.shape[0]):
+            #         y_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0 
+            #         out_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0
+            #         y[batch_idx][0][masks[batch_idx] == 2] = 0 
+            #         out[batch_idx][0][masks[batch_idx] == 2] = 0
+            #     y_multiplier = torch.tensor(y_multiplier).float().to(device=self.device)
+            #     out_multiplier = torch.tensor(out_multiplier).float().to(device=self.device)
+            #     out = torch.tensor(out).float().to(device=self.device)
+            #     loss1 = F.mse_loss(input=out_multiplier, target=y_multiplier)
+            #     loss2 = F.mse_loss(input=out, target= y)
+            #     loss = ( 5 * loss1 ) + loss2
+
+            num = np.sum(masks.detach().numpy()).item()
+            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
 
         return loss.data.detach().cpu().numpy()
 
