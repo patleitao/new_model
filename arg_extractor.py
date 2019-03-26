@@ -20,7 +20,7 @@ def get_args():
     :return: A namedtuple with arguments
     """
     parser = argparse.ArgumentParser(
-        description='Welcome to the MLP course\'s Pytorch training and inference helper script')
+        description='Parameter change helper script')
 
     parser.add_argument('--batch_size', nargs="?", type=int, default=100, help='Batch_size for experiment')
     parser.add_argument('--continue_from_epoch', nargs="?", type=int, default=-1, help='Batch_size for experiment')
@@ -39,9 +39,10 @@ def get_args():
     
     # Choose Model
 
-    parser.add_argument('--model_arc', nargs="?", type=str, default="standard", help="standard, multdec, holeconv, holefcl")
+    parser.add_argument('--model_arc', nargs="?", type=str, default="standard", help="standard, multdec, holes")
     parser.add_argument('--input_size', nargs="?", type=int, default=128, help="128, 64, 32")
-    parser.add_argument('--patch_size', nargs="?", type=int, default=8)
+    parser.add_argument('--hole_context', nargs="?", type=int, default=0, help="0 to 5")
+    parser.add_argument('--loss_multiplier', nargs="?", type=str2bool, default=False, help='true to mulitply overlapping loss by 10')
 
 
     # Mutliple Decoder Arguments

@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128, patch_size=8):
+                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128, hole_context=0, loss_multiplier=False):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -75,7 +75,8 @@ class ExperimentBuilder(nn.Module):
         self.loss_weights = loss_weights
         self.model_arc = model_arc
         self.input_size = input_size
-        self.patch_size = patch_size
+        self.hole_context = hole_context
+        self.loss_multiplier = loss_multiplier
 
         if not os.path.exists(self.experiment_folder):  # If experiment directory does not exist
             os.mkdir(self.experiment_folder)  # create the experiment directory
@@ -138,27 +139,61 @@ class ExperimentBuilder(nn.Module):
             loss_3 = F.mse_loss(input=out3, target=y3)
             loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
 
-        elif self.model_arc == 'holefcl':
+        elif self.model_arc == 'holes':
 
-            x, y = create_labels_holes(x, patch_size=self.patch_size)
+            new_x, masks = create_labels_holes(x, self.hole_context)
+            y = np.array(x, copy=True)
 
-            x = torch.tensor(x).float().to(device=self.device)
+            new_x = torch.tensor(new_x).float().to(device=self.device)
             y = torch.tensor(y).float().to(device=self.device)
+            masks = torch.tensor(masks).float().to(device=self.device)
 
-            out = self.model.forward(x)
-            loss = F.mse_loss(input=out, target=y)
+            out = self.model.forward(new_x)
+            out_mask = torch.mul(out, masks)
+            y_mask = torch.mul(y, masks)
+            #y[masks == 0] = 0 
+            #out[masks == 0] = 0
 
-        elif self.model_arc == 'holeconv':
+            # apply mask to target and output
+            # for batch_idx in range(new_x.shape[0]):
+            #     y[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0 
+            #     out[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0
 
-            x, y = create_labels_holes(x, patch_size=self.patch_size)
+            # plt.imshow(y[0, 0, :, :])
+            # plt.show()
+            # plt.imshow(y[1, 0, :, :])
+            # plt.show()
+            # plt.imshow(out.detach().numpy()[0, 0, :, :])
+            # plt.show()
+            # plt.imshow(out.detach().numpy()[1, 0, :, :])
+            # plt.show()
 
-            x = torch.tensor(x).float().to(device=self.device)
-            y = torch.tensor(y).float().to(device=self.device)
 
-            out = self.model.forward(x)
-            out = out[:, 0, :, :]
-            loss = F.mse_loss(input=out, target=y)
+            # if (self.loss_multiplier == True):   
+            #     y_multiplier = np.array(y, copy=True)
+            #     out_multiplier = np.array(out.detach().numpy(), copy=True)
+            #     for batch_idx in range(new_x.shape[0]):
+            #         y_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0 
+            #         out_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0
+            #         y[batch_idx][0][masks[batch_idx] == 2] = 0 
+            #         out[batch_idx][0][masks[batch_idx] == 2] = 0
+            #     y_multiplier = torch.tensor(y_multiplier).float().to(device=self.device)
+            #     out_multiplier = torch.tensor(out_multiplier).float().to(device=self.device)
+            #     out = torch.tensor(out).float().to(device=self.device)
+            #     loss1 = F.mse_loss(input=out_multiplier, target=y_multiplier)
+            #     loss2 = F.mse_loss(input=out, target= y)
+            #     loss = ( 5 * loss1 ) + loss2
 
+            else:
+                num = np.sum(masks.detach().numpy()).item()
+                loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
+
+                plt.imshow(out_mask[0,0,:,:].detach().numpy())
+                plt.show()
+                plt.imshow(y_mask[0,0,:,:].detach().numpy())
+                plt.show()
+                plt.imshow(new_x[0,0,:,:].detach().numpy())
+                plt.show()
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -195,25 +230,14 @@ class ExperimentBuilder(nn.Module):
             loss_3 = F.mse_loss(input=out3, target=y3)
             loss = self.loss_weights[0]*loss_1 + self.loss_weights[1]*loss_2 + self.loss_weights[2]*loss_3
 
-        elif self.model_arc == 'holefcl':
+        elif self.model_arc == 'holes':
 
-            x, y = create_labels_holes(x, patch_size=self.patch_size)
-
-            x = torch.tensor(x).float().to(device=self.device)
-            y = torch.tensor(y).float().to(device=self.device)
-
-            out = self.model.forward(x)
-            loss = F.mse_loss(input=out, target=y)
-
-        elif self.model_arc == 'holeconv':
-
-            x, y = create_labels_holes(x, patch_size=self.patch_size)
+            x, y = create_labels_holes(x, hole_size=self.hole_size)
 
             x = torch.tensor(x).float().to(device=self.device)
             y = torch.tensor(y).float().to(device=self.device)
 
             out = self.model.forward(x)
-            out = out[:, 0, :, :]
             loss = F.mse_loss(input=out, target=y)
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0

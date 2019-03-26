@@ -24,21 +24,57 @@ def create_labels_mult_decoder(x):
     return y1, y2, y3
 
 
-def create_labels_holes(x, patch_size=8):
+def create_labels_holes(x, hole_context):
 
-    y = np.zeros((x.shape[0], patch_size, patch_size))
+
+    masks = np.zeros((x.shape[0], x.shape[1], x.shape[2], x.shape[3]))
     new_x = np.array(x, copy=True)
     for batch_idx in range(x.shape[0]):
-        h_rand = random.randint(patch_size, x.shape[2]-patch_size)
-        w_rand = random.randint(patch_size, x.shape[3]-patch_size)
+
+        offset = 12
+        if hole_context != 0:
+            offset += hole_context
+
+        h_rand_1 = random.randint(offset, x.shape[2]-offset)
+        w_rand_1 = random.randint(offset, x.shape[3]-offset)
+        h_rand_2 = random.randint(offset, x.shape[2]-offset)
+        w_rand_2 = random.randint(offset, x.shape[3]-offset)
+        h_rand_3 = random.randint(offset, x.shape[2]-offset)
+        w_rand_3 = random.randint(offset, x.shape[3]-offset)
+        h_rand_4 = random.randint(offset, x.shape[2]-offset)
+        w_rand_4 = random.randint(offset, x.shape[3]-offset)
         
-        mask = np.ones((x.shape[2], x.shape[3]))
-        mask[h_rand-(patch_size//2):h_rand+(patch_size//2), w_rand-(patch_size//2):w_rand+(patch_size//2)] = 0
+        mask = np.zeros((x.shape[2], x.shape[3]))
 
-        y[batch_idx] = x[batch_idx, 0, h_rand-(patch_size//2):h_rand+(patch_size//2), w_rand-(patch_size//2):w_rand+(patch_size//2)]
-        new_x[batch_idx, 0, h_rand-(patch_size//2):h_rand+(patch_size//2), w_rand-(patch_size//2):w_rand+(patch_size//2)] = 0
+        mask[h_rand_1-10:h_rand_1+10, w_rand_1-10:w_rand_1+10] = 1
+        mask[h_rand_2-10:h_rand_2+10, w_rand_2-10:w_rand_2+10] = 1
+        mask[h_rand_3-10:h_rand_3+10, w_rand_3-10:w_rand_3+10] = 1
+        mask[h_rand_4-10:h_rand_4+10, w_rand_4-10:w_rand_4+10] = 1
 
-    return new_x, y
+
+        new_x[batch_idx][0][mask==1] = 128
+
+        # Set to false! change it to randomize context appearance
+        # if hole_context != 0 and False:
+
+        #     context_rand_1 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+        #     context_rand_2 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+        #     context_rand_3 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+        #     context_rand_4 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+        #     mask[h_rand_1-10 - context_rand_1:h_rand_1+10 + context_rand_1, w_rand_1-10 - context_rand_1:w_rand_1+10 +context_rand_1] = 1
+        #     mask[h_rand_2-10 - context_rand_2:h_rand_2+10 + context_rand_2, w_rand_2-10 - context_rand_2:w_rand_2+10 +context_rand_2] = 1
+        #     mask[h_rand_3-10 - context_rand_3:h_rand_3+10 + context_rand_3, w_rand_3-10 - context_rand_3:w_rand_3+10 +context_rand_3] = 1
+        #     mask[h_rand_4-10 - context_rand_4:h_rand_4+10 + context_rand_4, w_rand_4-10 - context_rand_4:w_rand_4+10 +context_rand_4] = 1
+
+
+        mask[h_rand_1-10 - hole_context:h_rand_1+10 + hole_context, w_rand_1-10 - hole_context:w_rand_1+10 +hole_context] = 1
+        mask[h_rand_2-10 - hole_context:h_rand_2+10 + hole_context, w_rand_2-10 - hole_context:w_rand_2+10 +hole_context] = 1
+        mask[h_rand_3-10 - hole_context:h_rand_3+10 + hole_context, w_rand_3-10 - hole_context:w_rand_3+10 +hole_context] = 1
+        mask[h_rand_4-10 - hole_context:h_rand_4+10 + hole_context, w_rand_4-10 - hole_context:w_rand_4+10 +hole_context] = 1
+
+        masks[batch_idx, 0, :, :] = mask
+
+    return new_x, masks
 
 
 

@@ -2,8 +2,7 @@ import numpy as np
 from arg_extractor import get_args
 from experiment_builder import ExperimentBuilder
 from model_architectures import SaliencyModelStandard
-from model_architectures import SaliencyModelHolesConv
-from model_architectures import SaliencyModelHolesFCL
+from model_architectures import SaliencyModelHoles
 from model_architectures import SaliencyModel
 from utils import *
 
@@ -17,11 +16,12 @@ import torch
 torch.manual_seed(seed=args.seed) # sets pytorch's seed
 
 if args.input_size == 128:
-	imgs = load_array("images_128")
+	imgs = load_array("data/images_128")
 elif args.input_size == 64:
-	imgs = load_array("images_64")
+	imgs = load_array("data/images_64")
 elif args.input_size == 32:
-	imgs = load_array("images_32")
+	imgs = load_array("data/images_32")
+
 
 train_size = 100
 val_size = 10
@@ -41,10 +41,8 @@ if args.model_arc == "multdec":
 	conv_net = SaliencyModel()
 elif args.model_arc == "standard":
 	conv_net = SaliencyModelStandard()
-elif args.model_arc == "holeconv":
-	conv_net = SaliencyModelHolesConv()
-elif args.model_arc == "holefcl":
-	conv_net = SaliencyModelHolesFCL(input_size=args.input_size, ps=args.patch_size)
+elif args.model_arc == "holes":
+	conv_net = SaliencyModelHoles()
 
 conv_experiment = ExperimentBuilder(network_model=conv_net,
                                     experiment_name=args.experiment_name,
@@ -53,7 +51,7 @@ conv_experiment = ExperimentBuilder(network_model=conv_net,
                                     gpu_id=args.gpu_id, use_gpu=args.use_gpu,
                                     continue_from_epoch=args.continue_from_epoch,
                                     train_data=train_data, val_data=val_data,
-                                    test_data=test_data, loss_weights=args.loss_weights, model_arc=args.model_arc, input_size=args.input_size, patch_size=args.patch_size,
+                                    test_data=test_data, loss_weights=args.loss_weights, model_arc=args.model_arc, hole_context=args.hole_context, loss_multiplier=args.loss_multiplier,
                                     device = device) 
 
 
