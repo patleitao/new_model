@@ -23,8 +23,8 @@ elif args.input_size == 32:
 	imgs = load_array("data/images_32")
 
 
-train_size = 100
-val_size = 10
+train_size = 82000
+val_size = 2000
 
 trainset = imgs[:train_size]
 trainset = np.expand_dims(trainset, axis=1)
