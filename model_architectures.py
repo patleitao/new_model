@@ -54,6 +54,7 @@ class SaliencyModel(nn.Module):
             ('norm5', nn.BatchNorm2d(num_dec_features[0])),
             ('relu5', nn.ReLU(inplace=True)),
             ('final-conv1', nn.Conv2d(num_dec_features[0], 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('tanh1', nn.Tanh()),
         ]))
 
         self.decoder2 = nn.Sequential(OrderedDict([
@@ -61,6 +62,7 @@ class SaliencyModel(nn.Module):
             ('norm6', nn.BatchNorm2d(num_dec_features[1])),
             ('relu6', nn.ReLU(inplace=True)),
             ('final-conv2', nn.Conv2d(num_dec_features[1], 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('tanh2', nn.Tanh()),
         ]))
 
         self.decoder3 = nn.Sequential(OrderedDict([
@@ -68,6 +70,7 @@ class SaliencyModel(nn.Module):
             ('norm7', nn.BatchNorm2d(num_dec_features[2])),
             ('relu7', nn.ReLU(inplace=True)),
             ('final-conv3', nn.Conv2d(num_dec_features[2], 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('tanh3', nn.Tanh()),
         ]))
 
 
@@ -78,11 +81,8 @@ class SaliencyModel(nn.Module):
         encoding3 = self.encoder3(encoding2)
 
         decoding1 = self.decoder1(encoding1)
-        decoding1 = F.relu(decoding1, inplace=True)
         decoding2 = self.decoder2(encoding2)
-        decoding2 = F.relu(decoding2, inplace=True)
         decoding3 = self.decoder3(encoding3)
-        decoding3 = F.relu(decoding3, inplace=True)
 
         return decoding1, decoding2, decoding3
 
