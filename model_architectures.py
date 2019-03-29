@@ -172,14 +172,15 @@ class SaliencyModelStandard(nn.Module):
 
 class SaliencyModelHoles(nn.Module):
 
-    def __init__(self):
+    def __init__(self, is_tanh=False):
 
         super(SaliencyModelHoles, self).__init__()
 
         num_features = [64, 64, 128, 256, 512]
         bn = 4000
         num_dec_features = [512, 256, 128, 64, 64]
-
+        self.is_tanh = is_tanh
+        print(is_tanh)
         self.encoder = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(1, num_features[0], kernel_size=4, stride=2, padding=1, bias=False)),
             ('lrelu0', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
@@ -200,25 +201,46 @@ class SaliencyModelHoles(nn.Module):
             ('lrelu5', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
         ]))
 
-        self.decoder = nn.Sequential(OrderedDict([
-            ('deconv1', nn.ConvTranspose2d(bn, num_dec_features[0], kernel_size=4, stride=1, padding=0, bias=False)),
-            ('denorm1', nn.BatchNorm2d(num_dec_features[0])),
-            ('derelu1', nn.ReLU(inplace=True)),
-            ('deconv2', nn.ConvTranspose2d(num_dec_features[0], num_dec_features[1], kernel_size=4, stride=2, padding=1, bias=False)),
-            ('denorm2', nn.BatchNorm2d(num_dec_features[1])),
-            ('derelu2', nn.ReLU(inplace=True)),
-            ('deconv3', nn.ConvTranspose2d(num_dec_features[1], num_dec_features[2], kernel_size=4, stride=2, padding=1, bias=False)),
-            ('denorm3', nn.BatchNorm2d(num_dec_features[2])),
-            ('derelu3', nn.ReLU(inplace=True)),
-            ('deconv4', nn.ConvTranspose2d(num_dec_features[2], num_dec_features[3], kernel_size=4, stride=2, padding=1, bias=False)),
-            ('denorm4', nn.BatchNorm2d(num_dec_features[3])),
-            ('derelu3', nn.ReLU(inplace=True)),
-            ('deconv5', nn.ConvTranspose2d(num_dec_features[3], num_dec_features[4], kernel_size=4, stride=2, padding=1, bias=False)),
-            ('denorm5', nn.BatchNorm2d(num_dec_features[4])),
-            ('derelu5', nn.ReLU(inplace=True)),
-            ('deconv6', nn.ConvTranspose2d(num_dec_features[4], 1, kernel_size=4, stride=2, padding=1, bias=False)),
-            ('derelu6', nn.ReLU(inplace=True))
-        ]))
+        if self.is_tanh:
+            self.decoder = nn.Sequential(OrderedDict([
+                ('deconv1', nn.ConvTranspose2d(bn, num_dec_features[0], kernel_size=4, stride=1, padding=0, bias=False)),
+                ('denorm1', nn.BatchNorm2d(num_dec_features[0])),
+                ('derelu1', nn.ReLU(inplace=True)),
+                ('deconv2', nn.ConvTranspose2d(num_dec_features[0], num_dec_features[1], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm2', nn.BatchNorm2d(num_dec_features[1])),
+                ('derelu2', nn.ReLU(inplace=True)),
+                ('deconv3', nn.ConvTranspose2d(num_dec_features[1], num_dec_features[2], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm3', nn.BatchNorm2d(num_dec_features[2])),
+                ('derelu3', nn.ReLU(inplace=True)),
+                ('deconv4', nn.ConvTranspose2d(num_dec_features[2], num_dec_features[3], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm4', nn.BatchNorm2d(num_dec_features[3])),
+                ('derelu3', nn.ReLU(inplace=True)),
+                ('deconv5', nn.ConvTranspose2d(num_dec_features[3], num_dec_features[4], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm5', nn.BatchNorm2d(num_dec_features[4])),
+                ('derelu5', nn.ReLU(inplace=True)),
+                ('deconv6', nn.ConvTranspose2d(num_dec_features[4], 1, kernel_size=4, stride=2, padding=1, bias=False)),
+                ('derelu6', nn.Tanh())
+            ]))
+        else:
+            self.decoder = nn.Sequential(OrderedDict([
+                ('deconv1', nn.ConvTranspose2d(bn, num_dec_features[0], kernel_size=4, stride=1, padding=0, bias=False)),
+                ('denorm1', nn.BatchNorm2d(num_dec_features[0])),
+                ('derelu1', nn.ReLU(inplace=True)),
+                ('deconv2', nn.ConvTranspose2d(num_dec_features[0], num_dec_features[1], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm2', nn.BatchNorm2d(num_dec_features[1])),
+                ('derelu2', nn.ReLU(inplace=True)),
+                ('deconv3', nn.ConvTranspose2d(num_dec_features[1], num_dec_features[2], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm3', nn.BatchNorm2d(num_dec_features[2])),
+                ('derelu3', nn.ReLU(inplace=True)),
+                ('deconv4', nn.ConvTranspose2d(num_dec_features[2], num_dec_features[3], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm4', nn.BatchNorm2d(num_dec_features[3])),
+                ('derelu3', nn.ReLU(inplace=True)),
+                ('deconv5', nn.ConvTranspose2d(num_dec_features[3], num_dec_features[4], kernel_size=4, stride=2, padding=1, bias=False)),
+                ('denorm5', nn.BatchNorm2d(num_dec_features[4])),
+                ('derelu5', nn.ReLU(inplace=True)),
+                ('deconv6', nn.ConvTranspose2d(num_dec_features[4], 1, kernel_size=4, stride=2, padding=1, bias=False)),
+                ('derelu6', nn.ReLU(inplace=True))
+            ]))
 
 
     def forward(self, x):

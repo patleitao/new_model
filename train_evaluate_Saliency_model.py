@@ -15,16 +15,22 @@ import torch
 
 torch.manual_seed(seed=args.seed) # sets pytorch's seed
 
+
 if args.input_size == 128:
-	imgs = load_array("data/images_128")
+      imgs = load_array("data/images_128")
+      if (args.is_tanh == True):
+            imgs = normalise(imgs)
 elif args.input_size == 64:
 	imgs = load_array("data/images_64")
 elif args.input_size == 32:
 	imgs = load_array("data/images_32")
 
 
-train_size = 82000
-val_size = 2000
+# train_size = 82000
+# val_size = 2000
+
+train_size = 100
+val_size = 10
 
 trainset = imgs[:train_size]
 trainset = np.expand_dims(trainset, axis=1)
@@ -42,7 +48,7 @@ if args.model_arc == "multdec":
 elif args.model_arc == "standard":
 	conv_net = SaliencyModelStandard()
 elif args.model_arc == "holes":
-	conv_net = SaliencyModelHoles()
+	conv_net = SaliencyModelHoles(is_tanh=args.is_tanh)
 
 conv_experiment = ExperimentBuilder(network_model=conv_net,
                                     experiment_name=args.experiment_name,

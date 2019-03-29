@@ -50,7 +50,9 @@ def get_args():
     parser.add_argument('--loss_weights', nargs="*", type=float, default=[0.333, 0.333, 0.334],
                         help='weight of each image reconstruction size')
 
+    # normalised with tanh or unormalised with relu
 
+    parser.add_argument('--is_tanh', nargs="?", type=str2bool, default=False, help="Tanh or relu for final activation")
 
 
 

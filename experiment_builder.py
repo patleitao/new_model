@@ -143,14 +143,14 @@ class ExperimentBuilder(nn.Module):
 
             new_x, masks = create_labels_holes(x, self.hole_context)
             y = np.array(x, copy=True)
+            y_mask = np.multiply(y, masks)
 
             new_x = torch.tensor(new_x).float().to(device=self.device)
-            y = torch.tensor(y).float().to(device=self.device)
+            y_mask = torch.tensor(y_mask).float().to(device=self.device)
             masks = torch.tensor(masks).float().to(device=self.device)
 
             out = self.model.forward(new_x)
             out_mask = torch.mul(out, masks)
-            y_mask = torch.mul(y, masks)
             #y[masks == 0] = 0 
             #out[masks == 0] = 0
 
@@ -159,14 +159,14 @@ class ExperimentBuilder(nn.Module):
             #     y[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0 
             #     out[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0
 
-            # plt.imshow(y[0, 0, :, :])
-            # plt.show()
-            # plt.imshow(y[1, 0, :, :])
-            # plt.show()
-            # plt.imshow(out.detach().numpy()[0, 0, :, :])
-            # plt.show()
-            # plt.imshow(out.detach().numpy()[1, 0, :, :])
-            # plt.show()
+            plt.imshow(y_mask[0, 0, :, :])
+            plt.show()
+            plt.imshow(y_mask[1, 0, :, :])
+            plt.show()
+            plt.imshow(out_mask.detach().numpy()[0, 0, :, :])
+            plt.show()
+            plt.imshow(out_mask.detach().numpy()[1, 0, :, :])
+            plt.show()
 
 
             # if (self.loss_multiplier == True):   

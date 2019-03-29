@@ -123,7 +123,7 @@ def rgb_to_bw(imgs):
     return new_imgs
 
 def normalise(data):
-    return data.astype('float32')/255.0
+    return 2.0*(data.astype('float32')/255.0)-1.0
 
 
 def calculate_variance_of_errmap(errmaps):
