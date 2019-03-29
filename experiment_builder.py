@@ -159,16 +159,6 @@ class ExperimentBuilder(nn.Module):
             #     y[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0 
             #     out[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0
 
-            plt.imshow(y_mask[0, 0, :, :])
-            plt.show()
-            plt.imshow(y_mask[1, 0, :, :])
-            plt.show()
-            plt.imshow(out_mask.detach().numpy()[0, 0, :, :])
-            plt.show()
-            plt.imshow(out_mask.detach().numpy()[1, 0, :, :])
-            plt.show()
-
-
             # if (self.loss_multiplier == True):   
             #     y_multiplier = np.array(y, copy=True)
             #     out_multiplier = np.array(out.detach().numpy(), copy=True)
