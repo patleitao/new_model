@@ -174,8 +174,8 @@ class ExperimentBuilder(nn.Module):
             #     loss2 = F.mse_loss(input=out, target= y)
             #     loss = ( 5 * loss1 ) + loss2
 
-            num = np.sum(masks.detach().cpu().numpy()).item()
-            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
+            #num = np.sum(masks.detach().cpu().numpy()).item()
+            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -257,8 +257,8 @@ class ExperimentBuilder(nn.Module):
             #     loss2 = F.mse_loss(input=out, target= y)
             #     loss = ( 5 * loss1 ) + loss2
 
-            num = np.sum(masks.detach().cpu().numpy()).item()
-            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
+            #num = np.sum(masks.detach().cpu().numpy()).item()
+            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')
 
         return loss.data.detach().cpu().numpy()
 
