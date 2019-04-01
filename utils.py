@@ -16,8 +16,11 @@ def create_labels_mult_decoder(x):
     y3 = np.zeros((x.shape[0], 1, 8, 8))
     for idx, img in enumerate(x):
         label1 = imresize(img[0], (64, 64))
+        label1 = normalise(label1)
         label2 = imresize(img[0], (32, 32))
+        label2 = normalise(label2)
         label3 = imresize(img[0], (8, 8))
+        label3 = normalise(label3)
         y1[idx][0] = label1
         y2[idx][0] = label2
         y3[idx][0] = label3
@@ -31,7 +34,7 @@ def create_labels_holes(x, hole_context):
     new_x = np.array(x, copy=True)
     for batch_idx in range(x.shape[0]):
 
-        offset = 12
+        offset = 16
         if hole_context != 0:
             offset += hole_context
 
@@ -46,13 +49,13 @@ def create_labels_holes(x, hole_context):
         
         mask = np.zeros((x.shape[2], x.shape[3]))
 
-        mask[h_rand_1-10:h_rand_1+10, w_rand_1-10:w_rand_1+10] = 1
-        mask[h_rand_2-10:h_rand_2+10, w_rand_2-10:w_rand_2+10] = 1
-        mask[h_rand_3-10:h_rand_3+10, w_rand_3-10:w_rand_3+10] = 1
-        mask[h_rand_4-10:h_rand_4+10, w_rand_4-10:w_rand_4+10] = 1
+        mask[h_rand_1-14:h_rand_1+14, w_rand_1-14:w_rand_1+14] = 1
+        mask[h_rand_2-14:h_rand_2+14, w_rand_2-14:w_rand_2+14] = 1
+        mask[h_rand_3-14:h_rand_3+14, w_rand_3-14:w_rand_3+14] = 1
+        mask[h_rand_4-14:h_rand_4+14, w_rand_4-14:w_rand_4+14] = 1
 
 
-        new_x[batch_idx][0][mask==1] = 128
+        new_x[batch_idx][0][mask==1] = 0
 
         # Set to false! change it to randomize context appearance
         # if hole_context != 0 and False:
