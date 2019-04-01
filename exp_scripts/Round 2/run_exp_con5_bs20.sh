@@ -35,4 +35,4 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-python train_evaluate_Saliency_model.py --batch_size 1 --experiment_name "holes_con5_bs1" --use_gpu "True" --gpu_id "0" --model_arc "holes" --hole_context 5 --is_tanh "True"
+python train_evaluate_Saliency_model.py --batch_size 20 --experiment_name "holes_con5_bs20" --use_gpu "True" --gpu_id "0" --model_arc "holes" --hole_context 5 --is_tanh "True"
