@@ -29,8 +29,6 @@ elif args.input_size == 32:
 train_size = 82000
 val_size = 2000
 
-# train_size = 100
-# val_size = 10
 
 
 trainset = imgs[:train_size]

@@ -174,6 +174,7 @@ class ExperimentBuilder(nn.Module):
             #     loss2 = F.mse_loss(input=out, target= y)
             #     loss = ( 5 * loss1 ) + loss2
 
+
             num = np.sum(masks.detach().cpu().numpy()).item()
             loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
 
