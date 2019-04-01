@@ -18,8 +18,7 @@ torch.manual_seed(seed=args.seed) # sets pytorch's seed
 
 if args.input_size == 128:
       imgs = load_array("data/images_128")
-      if (args.is_tanh == True):
-            imgs = normalise(imgs)
+      imgs = normalise(imgs)
 elif args.input_size == 64:
 	imgs = load_array("data/images_64")
 elif args.input_size == 32:
@@ -28,6 +27,9 @@ elif args.input_size == 32:
 
 train_size = 82000
 val_size = 2000
+
+#train_size = 100
+#val_size = 10
 
 
 

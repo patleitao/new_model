@@ -53,7 +53,7 @@ class SaliencyModel(nn.Module):
             ('conv5', nn.ConvTranspose2d(num_features[1], num_dec_features[0], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm5', nn.BatchNorm2d(num_dec_features[0])),
             ('relu5', nn.ReLU(inplace=True)),
-            ('final-conv1', nn.Conv2d(num_dec_features[0], 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('final-conv1', nn.Conv2d(num_dec_features[0], 1, kernel_size=1, stride=1, padding=0, bias=True)),
             ('tanh1', nn.Tanh()),
         ]))
 
@@ -61,7 +61,7 @@ class SaliencyModel(nn.Module):
             ('conv6', nn.ConvTranspose2d(num_features[2], num_dec_features[1], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm6', nn.BatchNorm2d(num_dec_features[1])),
             ('relu6', nn.ReLU(inplace=True)),
-            ('final-conv2', nn.Conv2d(num_dec_features[1], 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('final-conv2', nn.Conv2d(num_dec_features[1], 1, kernel_size=1, stride=1, padding=0, bias=True)),
             ('tanh2', nn.Tanh()),
         ]))
 
@@ -69,7 +69,7 @@ class SaliencyModel(nn.Module):
             ('conv7', nn.ConvTranspose2d(num_features[4], num_dec_features[2], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm7', nn.BatchNorm2d(num_dec_features[2])),
             ('relu7', nn.ReLU(inplace=True)),
-            ('final-conv3', nn.Conv2d(num_dec_features[2], 1, kernel_size=1, stride=1, padding=0, bias=True))
+            ('final-conv3', nn.Conv2d(num_dec_features[2], 1, kernel_size=1, stride=1, padding=0, bias=True)),
             ('tanh3', nn.Tanh()),
         ]))
 
@@ -180,25 +180,24 @@ class SaliencyModelHoles(nn.Module):
         bn = 4000
         num_dec_features = [512, 256, 128, 64, 64]
         self.is_tanh = is_tanh
-        print(is_tanh)
         self.encoder = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(1, num_features[0], kernel_size=4, stride=2, padding=1, bias=False)),
-            ('lrelu0', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+            ('lrelu0', nn.LeakyReLU(negative_slope=0.1, inplace=True)),
             ('conv1', nn.Conv2d(num_features[0], num_features[1], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm1', nn.BatchNorm2d(num_features[1])),
-            ('lrelu1', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+            ('lrelu1', nn.LeakyReLU(negative_slope=0.1, inplace=True)),
             ('conv2', nn.Conv2d(num_features[1], num_features[2], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm2', nn.BatchNorm2d(num_features[2])),
-            ('lrelu2', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+            ('lrelu2', nn.LeakyReLU(negative_slope=0.1, inplace=True)),
             ('conv3', nn.Conv2d(num_features[2], num_features[3], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm3', nn.BatchNorm2d(num_features[3])),
-            ('lrelu3', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+            ('lrelu3', nn.LeakyReLU(negative_slope=0.1, inplace=True)),
             ('conv4', nn.Conv2d(num_features[3], num_features[4], kernel_size=4, stride=2, padding=1, bias=False)),
             ('norm4', nn.BatchNorm2d(num_features[4])),
-            ('lrelu4', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+            ('lrelu4', nn.LeakyReLU(negative_slope=0.1, inplace=True)),
             ('conv5', nn.Conv2d(num_features[4], bn, kernel_size=4, stride=1, padding=0, bias=False)),
             ('norm5', nn.BatchNorm2d(bn)),
-            ('lrelu5', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
+            ('lrelu5', nn.LeakyReLU(negative_slope=0.1, inplace=True)),
         ]))
 
         if self.is_tanh:
@@ -259,6 +258,5 @@ class SaliencyModelHoles(nn.Module):
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
                 nn.init.constant_(m.bias, 0)
-
 
 
