@@ -16,68 +16,116 @@ def create_labels_mult_decoder(x):
     y3 = np.zeros((x.shape[0], 1, 8, 8))
     for idx, img in enumerate(x):
         label1 = imresize(img[0], (64, 64))
-        label1 = normalise(label1)
+        label1 = normalise_tanh(label1)
         label2 = imresize(img[0], (32, 32))
-        label2 = normalise(label2)
+        label2 = normalise_tanh(label2)
         label3 = imresize(img[0], (8, 8))
-        label3 = normalise(label3)
+        label3 = normalise_tanh(label3)
         y1[idx][0] = label1
         y2[idx][0] = label2
         y3[idx][0] = label3
     return y1, y2, y3
 
 
-def create_labels_holes(x, hole_context):
+def create_labels_holes(x, hole_context, is_tanh, loss_multiplier):
 
 
     masks = np.zeros((x.shape[0], x.shape[1], x.shape[2], x.shape[3]))
     new_x = np.array(x, copy=True)
-    for batch_idx in range(x.shape[0]):
 
-        offset = 16
-        if hole_context != 0:
-            offset += hole_context
+    offset = 16
+    if hole_context != 0:
+        offset += hole_context
 
-        h_rand_1 = random.randint(offset, x.shape[2]-offset)
-        w_rand_1 = random.randint(offset, x.shape[3]-offset)
-        h_rand_2 = random.randint(offset, x.shape[2]-offset)
-        w_rand_2 = random.randint(offset, x.shape[3]-offset)
-        h_rand_3 = random.randint(offset, x.shape[2]-offset)
-        w_rand_3 = random.randint(offset, x.shape[3]-offset)
-        h_rand_4 = random.randint(offset, x.shape[2]-offset)
-        w_rand_4 = random.randint(offset, x.shape[3]-offset)
-        
-        mask = np.zeros((x.shape[2], x.shape[3]))
+    h_rand_1 = random.randint(offset, x.shape[2]-offset)
+    w_rand_1 = random.randint(offset, x.shape[3]-offset)
+    h_rand_2 = random.randint(offset, x.shape[2]-offset)
+    w_rand_2 = random.randint(offset, x.shape[3]-offset)
+    h_rand_3 = random.randint(offset, x.shape[2]-offset)
+    w_rand_3 = random.randint(offset, x.shape[3]-offset)
+    h_rand_4 = random.randint(offset, x.shape[2]-offset)
+    w_rand_4 = random.randint(offset, x.shape[3]-offset)
+    
+    mask = np.zeros((x.shape[2], x.shape[3]))
 
-        mask[h_rand_1-14:h_rand_1+14, w_rand_1-14:w_rand_1+14] = 1
-        mask[h_rand_2-14:h_rand_2+14, w_rand_2-14:w_rand_2+14] = 1
-        mask[h_rand_3-14:h_rand_3+14, w_rand_3-14:w_rand_3+14] = 1
-        mask[h_rand_4-14:h_rand_4+14, w_rand_4-14:w_rand_4+14] = 1
+    mask[h_rand_1-14:h_rand_1+14, w_rand_1-14:w_rand_1+14] = 1
+    mask[h_rand_2-14:h_rand_2+14, w_rand_2-14:w_rand_2+14] = 1
+    mask[h_rand_3-14:h_rand_3+14, w_rand_3-14:w_rand_3+14] = 1
+    mask[h_rand_4-14:h_rand_4+14, w_rand_4-14:w_rand_4+14] = 1
+
+    for idx in range(x.shape[0]):
+        if is_tanh:
+            new_x[idx,0,mask==1] = 0
+        else:
+            new_x[idx,0,mask==1] = 0.5
+
+    # Set to false! change it to randomize context appearance
+    # if hole_context != 0 and False:
+
+    #     context_rand_1 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     context_rand_2 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     context_rand_3 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     context_rand_4 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     mask[h_rand_1-10 - context_rand_1:h_rand_1+10 + context_rand_1, w_rand_1-10 - context_rand_1:w_rand_1+10 +context_rand_1] = 1
+    #     mask[h_rand_2-10 - context_rand_2:h_rand_2+10 + context_rand_2, w_rand_2-10 - context_rand_2:w_rand_2+10 +context_rand_2] = 1
+    #     mask[h_rand_3-10 - context_rand_3:h_rand_3+10 + context_rand_3, w_rand_3-10 - context_rand_3:w_rand_3+10 +context_rand_3] = 1
+    #     mask[h_rand_4-10 - context_rand_4:h_rand_4+10 + context_rand_4, w_rand_4-10 - context_rand_4:w_rand_4+10 +context_rand_4] = 1
+
+    mask[h_rand_1-10 - hole_context:h_rand_1+10 + hole_context, w_rand_1-10 - hole_context:w_rand_1+10 +hole_context] = loss_multiplier
+    mask[h_rand_2-10 - hole_context:h_rand_2+10 + hole_context, w_rand_2-10 - hole_context:w_rand_2+10 +hole_context] = loss_multiplier
+    mask[h_rand_3-10 - hole_context:h_rand_3+10 + hole_context, w_rand_3-10 - hole_context:w_rand_3+10 +hole_context] = loss_multiplier
+    mask[h_rand_4-10 - hole_context:h_rand_4+10 + hole_context, w_rand_4-10 - hole_context:w_rand_4+10 +hole_context] = loss_multiplier
+    mask[h_rand_1-14:h_rand_1+14, w_rand_1-14:w_rand_1+14] = 1
+    mask[h_rand_2-14:h_rand_2+14, w_rand_2-14:w_rand_2+14] = 1
+    mask[h_rand_3-14:h_rand_3+14, w_rand_3-14:w_rand_3+14] = 1
+    mask[h_rand_4-14:h_rand_4+14, w_rand_4-14:w_rand_4+14] = 1
+
+    return new_x, mask
+
+def create_labels_holes_test(x, hole_context, is_tanh, loss_multiplier):
 
 
-        new_x[batch_idx][0][mask==1] = 0
+    masks = np.zeros((x.shape[0], x.shape[1], x.shape[2], x.shape[3]))
+    new_x = np.array(x, copy=True)
 
-        # Set to false! change it to randomize context appearance
-        # if hole_context != 0 and False:
+    offset = 16
+    if hole_context != 0:
+        offset += hole_context
 
-        #     context_rand_1 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
-        #     context_rand_2 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
-        #     context_rand_3 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
-        #     context_rand_4 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
-        #     mask[h_rand_1-10 - context_rand_1:h_rand_1+10 + context_rand_1, w_rand_1-10 - context_rand_1:w_rand_1+10 +context_rand_1] = 1
-        #     mask[h_rand_2-10 - context_rand_2:h_rand_2+10 + context_rand_2, w_rand_2-10 - context_rand_2:w_rand_2+10 +context_rand_2] = 1
-        #     mask[h_rand_3-10 - context_rand_3:h_rand_3+10 + context_rand_3, w_rand_3-10 - context_rand_3:w_rand_3+10 +context_rand_3] = 1
-        #     mask[h_rand_4-10 - context_rand_4:h_rand_4+10 + context_rand_4, w_rand_4-10 - context_rand_4:w_rand_4+10 +context_rand_4] = 1
+    
+
+    
+    mask = np.zeros((x.shape[2], x.shape[3]))
+
+    mask[32:64, 32:64] = 1
+
+    for idx in range(x.shape[0]):
+        if is_tanh:
+            new_x[idx,0,mask==1] = 0
+        else:
+            new_x[idx,0,mask==1] = 0.5
+
+    # Set to false! change it to randomize context appearance
+    # if hole_context != 0 and False:
+
+    #     context_rand_1 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     context_rand_2 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     context_rand_3 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     context_rand_4 = random.randint(hole_context-hole_context//2, hole_context+hole_context//2)
+    #     mask[h_rand_1-10 - context_rand_1:h_rand_1+10 + context_rand_1, w_rand_1-10 - context_rand_1:w_rand_1+10 +context_rand_1] = 1
+    #     mask[h_rand_2-10 - context_rand_2:h_rand_2+10 + context_rand_2, w_rand_2-10 - context_rand_2:w_rand_2+10 +context_rand_2] = 1
+    #     mask[h_rand_3-10 - context_rand_3:h_rand_3+10 + context_rand_3, w_rand_3-10 - context_rand_3:w_rand_3+10 +context_rand_3] = 1
+    #     mask[h_rand_4-10 - context_rand_4:h_rand_4+10 + context_rand_4, w_rand_4-10 - context_rand_4:w_rand_4+10 +context_rand_4] = 1
+
+    mask[32 - hole_context:64 + hole_context, 32 - hole_context:64 +hole_context] = loss_multiplier
+    mask[32:64, 32:64] = 1
 
 
-        mask[h_rand_1-10 - hole_context:h_rand_1+10 + hole_context, w_rand_1-10 - hole_context:w_rand_1+10 +hole_context] = 1
-        mask[h_rand_2-10 - hole_context:h_rand_2+10 + hole_context, w_rand_2-10 - hole_context:w_rand_2+10 +hole_context] = 1
-        mask[h_rand_3-10 - hole_context:h_rand_3+10 + hole_context, w_rand_3-10 - hole_context:w_rand_3+10 +hole_context] = 1
-        mask[h_rand_4-10 - hole_context:h_rand_4+10 + hole_context, w_rand_4-10 - hole_context:w_rand_4+10 +hole_context] = 1
+    return new_x, mask
 
-        masks[batch_idx, 0, :, :] = mask
 
-    return new_x, masks
+
+
 
 
 
@@ -125,8 +173,11 @@ def rgb_to_bw(imgs):
     new_imgs = map(lambda x: x.convert('1'), imgs)
     return new_imgs
 
-def normalise(data):
-    return 2.0*(data.astype('float32')/255.0)-1.0
+def normalise_sigmoid(data):
+    return data.astype('float32')/255.0
+
+def normalise_tanh(data):
+    return 2*data.astype('float32')/255.0 - 1
 
 
 def calculate_variance_of_errmap(errmaps):

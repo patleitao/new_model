@@ -17,8 +17,9 @@ torch.manual_seed(seed=args.seed) # sets pytorch's seed
 
 
 if args.input_size == 128:
+      print('here')
       imgs = load_array("data/images_128")
-      imgs = normalise(imgs)
+      imgs = normalise_tanh(imgs)
 elif args.input_size == 64:
 	imgs = load_array("data/images_64")
 elif args.input_size == 32:
@@ -27,10 +28,6 @@ elif args.input_size == 32:
 
 train_size = 82000
 val_size = 2000
-
-#train_size = 100
-#val_size = 10
-
 
 
 trainset = imgs[:train_size]
@@ -58,7 +55,7 @@ conv_experiment = ExperimentBuilder(network_model=conv_net,
                                     gpu_id=args.gpu_id, use_gpu=args.use_gpu,
                                     continue_from_epoch=args.continue_from_epoch,
                                     train_data=train_data, val_data=val_data,
-                                    test_data=test_data, loss_weights=args.loss_weights, model_arc=args.model_arc, hole_context=args.hole_context, loss_multiplier=args.loss_multiplier,
+                                    test_data=test_data, loss_weights=args.loss_weights, model_arc=args.model_arc, hole_context=args.hole_context, loss_multiplier=args.loss_multiplier, is_tanh=args.is_tanh, loss_function=args.loss_function,
                                     device = device) 
 
 

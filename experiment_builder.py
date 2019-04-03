@@ -12,13 +12,17 @@ from storage_utils import save_statistics
 
 from utils import create_labels_mult_decoder
 from utils import create_labels_holes
+from utils import create_labels_holes_test
 
 import matplotlib.pyplot as plt
 
 
+
+
+
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128, hole_context=0, loss_multiplier=False):
+                 test_data, weight_decay_coefficient, use_gpu, gpu_id, continue_from_epoch=-1, device=None, loss_weights=[0.333, 0.333, 0.334], model_arc='standard', input_size=128, hole_context=0, loss_multiplier=1, is_tanh=False, loss_function="mse"):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -77,6 +81,11 @@ class ExperimentBuilder(nn.Module):
         self.input_size = input_size
         self.hole_context = hole_context
         self.loss_multiplier = loss_multiplier
+        self.is_tanh = is_tanh
+        if loss_function == "mse":
+            self.criterion = nn.MSELoss(reduction='none')
+        elif loss_function == "bce":
+            self.criterion = nn.BCELoss(reduction='none')
 
         if not os.path.exists(self.experiment_folder):  # If experiment directory does not exist
             os.mkdir(self.experiment_folder)  # create the experiment directory
@@ -141,49 +150,25 @@ class ExperimentBuilder(nn.Module):
 
         elif self.model_arc == 'holes':
 
-            new_x, masks = create_labels_holes(x, self.hole_context)
-            y = np.array(x, copy=True)
-            y_mask = np.multiply(y, masks)
+
+            new_x, mask = create_labels_holes_test(x, self.hole_context, self.is_tanh, self.loss_multiplier)
 
             new_x = torch.tensor(new_x).float().to(device=self.device)
-            y_mask = torch.tensor(y_mask).float().to(device=self.device)
-            masks = torch.tensor(masks).float().to(device=self.device)
+            x = torch.tensor(x).float().to(device=self.device)
+            mask = torch.tensor(mask).float().to(device=self.device)
 
             out = self.model.forward(new_x)
-            out_mask = torch.mul(out, masks)
-            #y[masks == 0] = 0 
-            #out[masks == 0] = 0
 
-            # apply mask to target and output
-            # for batch_idx in range(new_x.shape[0]):
-            #     y[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0 
-            #     out[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0
+            loss = self.criterion(out, x)
+            loss = loss * mask
 
-            # if (self.loss_multiplier == True):   
-            #     y_multiplier = np.array(y, copy=True)
-            #     out_multiplier = np.array(out.detach().numpy(), copy=True)
-            #     for batch_idx in range(new_x.shape[0]):
-            #         y_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0 
-            #         out_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0
-            #         y[batch_idx][0][masks[batch_idx] == 2] = 0 
-            #         out[batch_idx][0][masks[batch_idx] == 2] = 0
-            #     y_multiplier = torch.tensor(y_multiplier).float().to(device=self.device)
-            #     out_multiplier = torch.tensor(out_multiplier).float().to(device=self.device)
-            #     out = torch.tensor(out).float().to(device=self.device)
-            #     loss1 = F.mse_loss(input=out_multiplier, target=y_multiplier)
-            #     loss2 = F.mse_loss(input=out, target= y)
-            #     loss = ( 5 * loss1 ) + loss2
-
-
-            num = np.sum(masks.detach().cpu().numpy()).item()
-            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
-        loss.backward()  # backpropagate to compute gradients for current iter loss
+        loss.mean().backward()  # backpropagate to compute gradients for current iter loss
 
         self.optimizer.step()  # update network parameters
 
-        return loss.data.detach().cpu().numpy()
+        return loss.mean().data.detach().cpu().numpy()
 
 
 
@@ -215,53 +200,20 @@ class ExperimentBuilder(nn.Module):
 
         elif self.model_arc == 'holes':
 
-            new_x, masks = create_labels_holes(x, self.hole_context)
-            y = np.array(x, copy=True)
-
+            new_x, mask = create_labels_holes(x, self.hole_context, self.is_tanh, self.loss_multiplier)
             new_x = torch.tensor(new_x).float().to(device=self.device)
-            y = torch.tensor(y).float().to(device=self.device)
-            masks = torch.tensor(masks).float().to(device=self.device)
+            x = torch.tensor(x).float().to(device=self.device)
+            mask = torch.tensor(mask).float().to(device=self.device)
 
             out = self.model.forward(new_x)
-            out_mask = torch.mul(out, masks)
-            y_mask = torch.mul(y, masks)
-            #y[masks == 0] = 0 
-            #out[masks == 0] = 0
 
-            # apply mask to target and output
-            # for batch_idx in range(new_x.shape[0]):
-            #     y[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0 
-            #     out[batch_idx][0][masks[batch_idx, 0, :, :] == 0] = 0
+            loss = self.criterion(out, x)
+            loss = loss * mask
 
-            # plt.imshow(y[0, 0, :, :])
-            # plt.show()
-            # plt.imshow(y[1, 0, :, :])
-            # plt.show()
-            # plt.imshow(out.detach().numpy()[0, 0, :, :])
-            # plt.show()
-            # plt.imshow(out.detach().numpy()[1, 0, :, :])
-            # plt.show()
+            plt.imshow(out.detach().numpy()[0,0,:,:])
+            plt.show()
 
-
-            # if (self.loss_multiplier == True):   
-            #     y_multiplier = np.array(y, copy=True)
-            #     out_multiplier = np.array(out.detach().numpy(), copy=True)
-            #     for batch_idx in range(new_x.shape[0]):
-            #         y_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0 
-            #         out_multiplier[batch_idx][0][masks[batch_idx] == 1] = 0
-            #         y[batch_idx][0][masks[batch_idx] == 2] = 0 
-            #         out[batch_idx][0][masks[batch_idx] == 2] = 0
-            #     y_multiplier = torch.tensor(y_multiplier).float().to(device=self.device)
-            #     out_multiplier = torch.tensor(out_multiplier).float().to(device=self.device)
-            #     out = torch.tensor(out).float().to(device=self.device)
-            #     loss1 = F.mse_loss(input=out_multiplier, target=y_multiplier)
-            #     loss2 = F.mse_loss(input=out, target= y)
-            #     loss = ( 5 * loss1 ) + loss2
-
-            num = np.sum(masks.detach().cpu().numpy()).item()
-            loss = F.mse_loss(input=out_mask, target=y_mask, reduction='sum')/num
-
-        return loss.data.detach().cpu().numpy()
+        return loss.mean().data.detach().cpu().numpy()
 
 
 
@@ -309,7 +261,6 @@ class ExperimentBuilder(nn.Module):
                 for idx, x in enumerate(self.train_data):  # get data batches
                     epoch_total_loading_time += time.time() - loading_start_time
                     other_computation_start_time = time.time()
-
                     loss = self.run_train_iter(x=x)  # take a training iter step
                     current_epoch_losses["train_loss"].append(loss)  # add current iter loss to the train loss list
                     pbar_train.update(1)
