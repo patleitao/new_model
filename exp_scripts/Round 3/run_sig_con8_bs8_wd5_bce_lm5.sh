@@ -2,7 +2,7 @@
 #SBATCH -N 1	  # nodes requested
 #SBATCH -n 1	  # tasks requested
 #SBATCH --partition=Standard
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 #SBATCH --mem=12000  # memory in Mb
 #SBATCH --time=0-08:00:00
 
@@ -35,4 +35,4 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-python train_evaluate_Saliency_model.py --batch_size 20 --continue_from_epoch -1 --experiment_name "multdec_tanh_bs20" --use_gpu "True" --gpu_id "0" --weight_decay_coefficient 1e-05 --model_arc "multdec"
+python train_evaluate_Saliency_model.py --batch_size 8 --continue_from_epoch -1 --experiment_name "sig_con8_bs8_wd5_bce_lm5" --use_gpu "True" --gpu_id "0,1,2,3" --weight_decay_coefficient 1e-05 --model_arc "holes" --hole_context 8 --is_tanh "False" --loss_multiplier 5 --loss_function "bce" 

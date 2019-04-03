@@ -35,4 +35,4 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-python train_evaluate_Saliency_model.py --batch_size 16 --continue_from_epoch -1 --experiment_name "holes_con9_bs16_wd4" --use_gpu "True" --gpu_id "0,1,2,3" --weight_decay_coefficient 1e-04 --model_arc "holes" --hole_context 9 --is_tanh "True"
+python train_evaluate_Saliency_model.py --batch_size 8 --continue_from_epoch -1 --experiment_name "sig_con8_bs8_wd5_bce_lm0" --use_gpu "True" --gpu_id "0,1,2,3" --weight_decay_coefficient 1e-05 --model_arc "holes" --hole_context 8 --is_tanh "False" --loss_multiplier 0 --loss_function "bce" 
