@@ -7,3 +7,10 @@ images_128
 images_64
 data/
 results/
+analyse*
+results
+results1
+salicon_data_provider.ipyng
+PConv-Keras/__pycache__
+PConv-Keras/DeepReconstructer
+PConv-Keras/notebooks
