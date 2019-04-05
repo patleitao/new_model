@@ -14,3 +14,5 @@ salicon_data_provider.ipyng
 PConv-Keras/__pycache__
 PConv-Keras/DeepReconstructer
 PConv-Keras/notebooks
+PConv-Keras/pconv_imagenet.h5
+PConv-Keras/pytorch_to_keras_vgg16.h5
