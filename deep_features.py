@@ -102,7 +102,7 @@ def get_img_features_no_rec(img, mask_size, model):
     x = imresize(x, (224,224))
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
-    gt_feature = = model.predict(x)
+    gt_feature = model.predict(x)
     stride = int(mask_size/2)
     features = []
     for i in range(0+stride, 512-(stride*2), stride):
